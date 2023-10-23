@@ -1,0 +1,22 @@
+{
+  "name": "backendtesis",
+  "version": "1.0.0",
+  "description": "Tesis backend Gestion administrativa",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cesardanie/Tesisackend.git"
+  },
+  "author": "Cesar Daniel ROdriguez",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cesardanie/Tesisackend/issues"
+  },
+  "homepage": "https://github.com/cesardanie/Tesisackend#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
