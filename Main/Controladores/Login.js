@@ -2,21 +2,12 @@ const { json, response } = require('express');
 const expres =require('express');
 const axios= require('axios');
 const router=expres.Router();
-router.post('/Soporte',async(req,response)=>{
+
+router.post('/Login',async(req,response)=>{
   try{
 
       var status;
-      await Consulta.SoporteInsert(req.body).then(result=>{
-          result;
-          if(result[0]==1)
-          {
-              status="200";
-          }
-          else{
-              status="602"
-          }
 
-      })
 
 
   }
