@@ -2,6 +2,7 @@ const { json, response } = require('express');
 const expres =require('express');
 const axios= require('axios');
 const router=expres.Router();
+const Admnistradorquerys= require('../Consultas/QueryLogin.js');
 
 router.post('/IniciarSesion',async (request,response)=>{
   try{
