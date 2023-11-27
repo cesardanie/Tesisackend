@@ -3,9 +3,14 @@ const expres =require('express');
 const axios= require('axios');
 const router=expres.Router();
 const Admnistradorquerys= require('../Consultas/QueryLogin.js');
+const CryptoJS = require('crypto-js');
+
+
+
 
 router.post('/IniciarSesion',async (request,response)=>{
   try{
+        console.log(request.body)
       var bytes=CryptoJS.AES.decrypt(request.body.Contrasena,'DANIELRODRIGUEZGARNICA');
       var bytesCorreo=CryptoJS.AES.decrypt(request.body.Correo,'DANIELRODRIGUEZGARNICA');
       var textocifrcCorre=bytesCorreo.toString(CryptoJS.enc.Utf8)
