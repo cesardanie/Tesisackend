@@ -3,9 +3,9 @@ try{
         ///datos de conexion 
         user:'sa',
         password:'123456789',
-        server:'GWNR71517\SQLEXPRESS',
+        server:'GWNR71517\\SQLEXPRESS',
         requestTimeout: 80000,
-        database:'Cardsfastprueba',
+        database:'Gestionadministrativa',
         options:{
             trustedconnection: true,
             enableArithAbort:true,
@@ -17,5 +17,5 @@ try{
     module.exports=cnx;
     }catch(error)
     {
-         console.log(error);
+         console.log(error.message);
     }
