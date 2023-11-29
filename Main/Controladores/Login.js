@@ -4,8 +4,8 @@ const axios= require('axios');
 const router=expres.Router();
 const CryptoJS = require('crypto-js');
 const Admnistradorquerys= require('../Consultas/QueryLogin.js')
-
-
+const jwt = require('jsonwebtoken');
+const llave="ro8BS6Hiivgzy8Xuu09JDjlNLnSLldY5p";
 
 
 router.post('/IniciarSesion',async (request,response)=>{
@@ -29,11 +29,11 @@ router.post('/IniciarSesion',async (request,response)=>{
               console.log(element);
               if((guardardos.Correo.toString().toLowerCase()==element.Correo)&&(guardardos.Contrasena==element.Contrasena))
               {
-                  guardar_id=element.idCliente
+                  guardar_id=element.id
                   var Rol=element.Rol
                   const user={
-                      Usuario:element.Usuario,
-                      Contrasena:element.contrasena,
+                      Usuario:element.Correo,
+                      Contrasena:element.Contrasena,
                   }
                   const tokencheck= jwt.sign(user,llave,{
                       expiresIn:'20m'//expricacion del token
