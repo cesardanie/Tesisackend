@@ -59,7 +59,7 @@ router.post('/IniciarSesion',async (request,response)=>{
                       Contrasena:element.Contrasena,
                   }
                   const tokencheck= jwt.sign(user,llave,{
-                      expiresIn:'20m'//expricacion del token
+                      expiresIn:'10m'//expricacion del token
                   });
                   response.set("authorization",tokencheck);
                   respuestaboll={
@@ -86,7 +86,6 @@ router.get('/ObtenerUsuarios',verify,async(request,response)=>{
         var Respuesta={
             Estado:"",
             data:"",
-
         }
         var Datos=[];
         await UsuariosQuery.consultarUsuarios().then(result=>{
@@ -97,7 +96,7 @@ router.get('/ObtenerUsuarios',verify,async(request,response)=>{
             Respuesta.Estado=true
         })
         Respuesta.data=Datos;
-        response.send(Respuesta)
+        response.send(Respuesta);
     }catch(e)
     {
         throw new Error(`Se presento un Error en ${e.procName}.....${e.message}`)
