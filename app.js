@@ -6,6 +6,7 @@ const router = express.Router();
 const Login = require('./Main/Controladores/Login.js');
 const delet=require('./Main/Controladores/EliminarUsuarios.js');
 const addUsuario=require('./Main/Controladores/AgregarUsuario.js')
+const Calendario=require('./Main/Controladores/GestionarDias.js');
 // No necesitas una segunda declaración de cors aquí
 
 app.use(cors());
@@ -15,7 +16,7 @@ app.use(express.json());
 app.use('/add', addUsuario);
 app.use('/api', Login);
 app.use('/delete',delet);
-
+app.use('/apidos', Calendario);
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
