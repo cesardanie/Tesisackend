@@ -48,5 +48,25 @@ router.post('/AgregarDias',verify,async(request,response)=>{
     response.send(Respuesta);
 
 })
-
+router.get('/ObtenerDias',verify,async(request,response)=>{
+    try{
+        var Respuesta={
+            Estado:"",
+            data:"",
+        }
+        var Datos=[];
+        await GestionarDias.ObtenerCalendario().then(result=>{
+            for(var i=0;i<result.length;i++)
+            {
+                Datos.push(result[i]);
+            }
+            Respuesta.Estado=true
+        })
+        Respuesta.data=Datos;
+        response.send(Respuesta);
+    }catch(e)
+    {
+        throw new Error(`Se presento un Error en ${e.procName}.....${e.message}`)
+    }
+})
 module.exports = router;

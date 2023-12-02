@@ -19,6 +19,9 @@ async function EliminarUsuario(id)
 {
     try{
         let pool = await sql.connect(cnxlocal);
+          await pool.request()
+          .input('idUsuario', sql.Int, id)
+          .query('DELETE FROM Calendario WHERE idUsuario = @idUsuario');
         let consultarAdministradores = await pool.request()
             .input('id', sql.Int, id)
             .query('DELETE FROM Usuarios WHERE id = @id');
