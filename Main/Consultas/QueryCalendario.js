@@ -24,19 +24,20 @@ async function AgregarCalendario(id, DiaInicial, DiaFinal, Observacion, Estado) 
     throw new Error(`Se presentó un error en ${e.procName}.....${e.message}`);
   }
 }
-async function ObtenerCalendario()
-{
-  try{
+async function ObtenerCalendario(idUsuario) {
+  try {
     let pool = await sql.connect(cnxlocal);
-    let consultaradministradores= await pool.query(`SELECT * FROM Calendario`);
-    return consultaradministradores.recordset;
+    let consultarCalendario = await pool
+      .request()
+      .input('idUsuario', sql.Int, idUsuario)
+      .query('SELECT * FROM Calendario WHERE idUsuario = @idUsuario');
 
+    return consultarCalendario.recordset;
+  } catch (e) {
+    throw new Error(`Se presentó un error: ${e.message}`);
+  }
 }
-catch(e)
-{
-    throw new Error(`Se presento un Error en ${e.procName}.....${e.message}`)
-}
-}
+
   module.exports = {
     AgregarCalendario,
     ObtenerCalendario,

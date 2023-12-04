@@ -2,11 +2,10 @@ const { json, response } = require('express');
 const expres =require('express');
 const axios= require('axios');
 const router=expres.Router();
-const GestionarDias=require('../Consultas/QueryCalendario');
-
-
 const jwt = require('jsonwebtoken');
 const llave="ro8BS6Hiivgzy8Xuu09JDjlNLnSLldY5p";
+const ObtenerVacacionesGerente=require('../Consultas/QueryVacacionesAdmi');
+
 
 const verify=(req,res,next)=>{
     ////leo la cabezera
@@ -31,31 +30,14 @@ const verify=(req,res,next)=>{
     
 };
 
-router.post('/AgregarDias',verify,async(request,response)=>{
-    const id=request.body.id;
-    const DiaInicial=request.body.startDate;
-    const DiaFinal=request.body.endDate;
-    const Observacion= request.body.observaciones;
-    const Estado=request.body.Estado;
-    var Respuesta={
-        Estado:"",
-    }
-    console.log(request.body.id);
-    await GestionarDias.AgregarCalendario(id,DiaInicial,DiaFinal,Observacion,Estado).then(result=>{
-
-    })
-    Respuesta.Estado=true;
-    response.send(Respuesta);
-
-})
-router.post('/ObtenerDias',verify,async(request,response)=>{
+router.get('/ObtenerDiasAdmi',verify,async(request,response)=>{
     try{
         var Respuesta={
             Estado:"",
             data:"",
         }
         var Datos=[];
-        await GestionarDias.ObtenerCalendario(request.body.id).then(result=>{
+        await ObtenerVacacionesGerente.ObtenerVacacionesAdmi().then(result=>{
             for(var i=0;i<result.length;i++)
             {
                 Datos.push(result[i]);
@@ -69,4 +51,5 @@ router.post('/ObtenerDias',verify,async(request,response)=>{
         throw new Error(`Se presento un Error en ${e.procName}.....${e.message}`)
     }
 })
+
 module.exports = router;
