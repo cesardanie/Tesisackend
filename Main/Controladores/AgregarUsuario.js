@@ -32,14 +32,19 @@ const verify=(req,res,next)=>{
 };
 
 router.post('/AgregarUsuarios',verify,async(request,response)=>{
+    console.log(request.body);
     const Correo=request.body.Correo;
     const Contrasena=request.body.Contrasena;
     const Rol=request.body.Rol;
+    const Nombre= request.body.Nombre;
+    const Edad=request.body.Edad;
+    const Puesto=request.body.Puesto;
+    const Sueldo=request.body.Sueldo;
     var Respuesta={
         Estado:"",
     }
-    await UsuariosQuery.AgregarUsuario(Correo,Contrasena,Rol).then(result=>{
-        Respuesta.Estado=result;
+    await UsuariosQuery.AgregarUsuario(Correo,Contrasena,Rol,Nombre,Edad,Puesto,Sueldo).then(result=>{
+        Respuesta.Estado=true;
     })
     response.send(Respuesta);
 

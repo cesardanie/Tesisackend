@@ -51,5 +51,26 @@ router.get('/ObtenerDiasAdmi',verify,async(request,response)=>{
         throw new Error(`Se presento un Error en ${e.procName}.....${e.message}`)
     }
 })
+router.post('/updateAdmiDias',verify,async(request,response)=>{
+    try{
+        const id=request.body.id;
+        const Estado=request.body.Estado;
+
+        var Respuesta={
+            Estado:"",
+            data:"",
+        }
+        var Datos=[];
+        await ObtenerVacacionesGerente.CambioEstadoAdmi(Estado,id).then(result=>{
+            console.log(result);
+        })
+        Respuesta.data=Datos;
+        response.send(Respuesta);
+    }catch(e)
+    {
+        throw new Error(`Se presento un Error en ${e.procName}.....${e.message}`)
+    }
+})
+
 
 module.exports = router;

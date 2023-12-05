@@ -28,7 +28,21 @@ async function ObtenerVacacionesAdmi() {
         throw new Error(`Se presentó un error: ${e.message}`);
       }
   }
+  async function CambioEstadoAdmi(Estado,id){
+    try{
+        let pool = await sql.connect(cnxlocal);
+        const UsuarioCambio=await pool.request()
+        .input('id', sql.Int,id)
+        .input('Estado', sql.VarChar(50), Estado)
+        .query('UPDATE Calendario SET Estado = @Estado WHERE id = @id');
+        return UsuarioCambio;
+    }catch(e){
+      throw new Error(`Se presentó un error: ${e.message}`);
+    }
+
+  }
   module.exports = {
     ObtenerVacacionesAdmi,
+    CambioEstadoAdmi
     // Otros métodos o variables que necesites exportar
 };

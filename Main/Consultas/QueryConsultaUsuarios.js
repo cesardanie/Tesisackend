@@ -34,40 +34,56 @@ async function EliminarUsuario(id)
         throw new Error(`Se presento un Error en ${e.procName}.....${e.message}`)
     }
 }
-async function AgregarUsuario(Correo, Contrasena, Rol) {
-    try {
-      let pool = await sql.connect(cnxlocal);
-      var Respuesta={
-        Estado:"",
+async function AgregarUsuario(
+  Correo,
+  Contrasena,
+  Rol,
+  Nombre,
+  Edad,
+  Puesto,
+  Sueldo
+) {
+  try {
+    if (!Correo) {
+      throw new Error('El campo "Correo" no puede estar vacío.');
     }
-      // Verificar si ya existe un usuario con el mismo correo
-      let verificarUsuario = await pool
+
+    let pool = await sql.connect(cnxlocal);
+    var Respuesta = {
+      Estado: '',
+    };
+
+    // Verificar si ya existe un usuario con el mismo correo
+    let verificarUsuario = await pool
+      .request()
+      .input('Correo', sql.VarChar(255), Correo)
+      .query('SELECT * FROM Usuarios WHERE Correo = @Correo');
+
+    if (verificarUsuario.recordset.length > 0) {
+      // Si ya existe un usuario con el mismo correo, puedes manejar el error o devolver algún indicativo
+      return (Respuesta.Estado = false);
+    } else {
+      Respuesta.Estado = true;
+      // Si no existe, procede con la inserción
+      let insertarUsuario = await pool
         .request()
-        .input('Correo', sql.VarChar(255), Correo)
-        .query('SELECT * FROM Usuarios WHERE Correo = @Correo');
-      if (verificarUsuario.recordset.length > 0) {
-        // Si ya existe un usuario con el mismo correo, puedes manejar el error o devolver algún indicativo
-        return Respuesta.Estado=false
-      }
-      else{
-        Respuesta.Estado=true;
-        // Si no existe, procede con la inserción
-        let insertarUsuario = await pool
-        .request()
+        .input('Nombre', sql.VarChar(255), Nombre)
+        .input('Edad', sql.VarChar(255), Edad)
+        .input('Puesto', sql.VarChar(255), Puesto)
+        .input('Sueldo', sql.VarChar(255), Sueldo)
         .input('Correo', sql.VarChar(255), Correo)
         .input('Contrasena', sql.VarChar(255), Contrasena)
         .input('Rol', sql.VarChar(50), Rol)
-        .query('INSERT INTO Usuarios (Correo, Contrasena, Rol) VALUES (@Correo, @Contrasena, @Rol)');
-      }
-      
-
-  
-      return Respuesta;
-  
-    } catch (e) {
-      throw new Error(`Se presentó un error en ${e.procName}.....${e.message}`);
+        .query(
+          'INSERT INTO Usuarios (Correo, Contrasena, Rol, Nombre, Edad, Puesto, Sueldo) VALUES (@Correo, @Contrasena, @Rol, @Nombre, @Edad, @Puesto, @Sueldo)'
+        );
     }
+
+    return Respuesta;
+  } catch (e) {
+    throw new Error(`Se presentó un error en ${e.procName}.....${e.message}`);
   }
+}
   
 module.exports = {
     consultarUsuarios,
