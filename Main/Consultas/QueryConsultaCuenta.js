@@ -64,11 +64,32 @@ async function ObtenerDatos() {
         throw new Error(`Se presentó un error en ${e.procName}.....${e.message}`);
     }
 }
-
+async function InsertarDatos(id, Cuenta, Banco) {
+    try {
+      let pool = await sql.connect(cnxlocal);
+  
+      // Paso 1: Insertar datos en la tabla CuentasBancarias
+      await pool
+        .request()
+        .input('idUsuario', sql.Int, id)
+        .input('Cuenta', sql.VarChar(255), Cuenta)
+        .input('Banco', sql.VarChar(255), Banco)
+        .query('INSERT INTO CuentasBancarias (idUsuario, Cuenta, Banco) VALUES (@idUsuario, @Cuenta, @Banco)');
+  
+      // Paso 2: Obtener todos los usuarios actualizados
+      let consultaUsuarios = await pool.request().query('SELECT * FROM Usuarios');
+      let usuarios = consultaUsuarios.recordset;
+  
+      return usuarios; // Devuelve la información de usuarios con datos de CuentasBancarias
+    } catch (e) {
+      throw new Error(`Se presentó un error en ${e.procName}.....${e.message}`);
+    }
+  }
 
 module.exports = {
     consultarCuenta,
     actualizarCuenta,
     ObtenerDatos,
+    InsertarDatos,
     // Otros métodos o variables que necesites exportar
 };

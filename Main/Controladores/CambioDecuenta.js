@@ -69,17 +69,32 @@ router.post('/cambiarcuenta',verify,async(request,response)=>{
 
 })
 router.get('/obtenerDatosCompletos',verify,async(request,response)=>{
-    var Respuesta = {
-        Estado: "",
-        Datos: null, // Agregamos un campo para almacenar los datos de la cuenta
-    };
-    console.log(request.body.id);
-    const resultadodos=await QueryCuenta.ObtenerDatos();
+        var Respuesta = {
+            Estado: "",
+            Datos: null, // Agregamos un campo para almacenar los datos de la cuenta
+        };
+        console.log(request.body.id);
+        const resultadodos=await QueryCuenta.ObtenerDatos();
         // Almacenamos los resultados en la respuesta
         Respuesta.Datos = resultadodos;
 
         // Modificamos el estado después de haber completado la operación correctamente
         Respuesta.Estado = true;
+        response.send(Respuesta);
+
+})
+router.post('/IngresarDatosdecuenta',verify,async(request,response)=>{
+    var Respuesta = {
+        Estado: "",
+        Datos: null, // Agregamos un campo para almacenar los datos de la cuenta
+    };
+    console.log(request.body.data.id);
+    const resultadodos=await QueryCuenta.InsertarDatos(request.body.data.id,request.body.data.Cuenta,request.body.data.Banco);
+    // Almacenamos los resultados en la respuesta
+    Respuesta.Datos = resultadodos;
+
+    // Modificamos el estado después de haber completado la operación correctamente
+    Respuesta.Estado = true;
     response.send(Respuesta);
 
 })
