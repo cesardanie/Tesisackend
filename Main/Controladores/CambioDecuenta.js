@@ -68,5 +68,20 @@ router.post('/cambiarcuenta',verify,async(request,response)=>{
     response.send(Respuesta);
 
 })
+router.get('/obtenerDatosCompletos',verify,async(request,response)=>{
+    var Respuesta = {
+        Estado: "",
+        Datos: null, // Agregamos un campo para almacenar los datos de la cuenta
+    };
+    console.log(request.body.id);
+    const resultadodos=await QueryCuenta.ObtenerDatos();
+        // Almacenamos los resultados en la respuesta
+        Respuesta.Datos = resultadodos;
+
+        // Modificamos el estado después de haber completado la operación correctamente
+        Respuesta.Estado = true;
+    response.send(Respuesta);
+
+})
 
 module.exports = router;
