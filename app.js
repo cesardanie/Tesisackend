@@ -9,12 +9,14 @@ const addUsuario=require('./Main/Controladores/AgregarUsuario.js')
 const Calendario=require('./Main/Controladores/GestionarDias.js');
 const AdmiVacaciones=require('./Main/Controladores/GestiondeVacacionesAdmi.js');
 const Cambiodecuenta=require('./Main/Controladores/CambioDecuenta.js');
+const Nomina=require('./Main/Controladores/Nomina.js')
 // No necesitas una segunda declaración de cors aquí
 
 app.use(cors());
 
 var whitelist = process.env.PORT || ['http://localhost:3023']; // Permito que solo esta URL se conecte
 app.use(express.json());
+app.use('/apicinco',Nomina);
 app.use('/apicuatro',Cambiodecuenta);
 app.use('/apitres',AdmiVacaciones);
 app.use('/add', addUsuario);

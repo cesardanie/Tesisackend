@@ -25,6 +25,9 @@ async function EliminarUsuario(id)
           let deleteadministradores = await pool.request()
           .input('idUsuario', sql.Int, id)
           .query('DELETE FROM CuentasBancarias WHERE idUsuario = @idUsuario');
+          let deleteadministradoresc = await pool.request()
+          .input('idUsuario', sql.Int, id)
+          .query('DELETE FROM Nomina WHERE idUsuario = @idUsuario');
         let consultarAdministradores = await pool.request()
             .input('id', sql.Int, id)
             .query('DELETE FROM Usuarios WHERE id = @id');
