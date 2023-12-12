@@ -54,5 +54,17 @@ router.get('/ExtraerDatosNomina',verify,async(request,response)=>{
     response.send(Respuesta);
 
 })
+router.post('/ExtraerDatosNominaCliente',verify,async(request,response)=>{
+
+    var Respuesta = {
+        Estado: "",
+        Datos: null, // Agregamos un campo para almacenar los datos de la cuenta
+    };
+    const resultadodos=await Nomina.ObtenerDatosCliente(request.body.id);
+    Respuesta.Estado=true;
+    Respuesta.Datos=resultadodos;
+    response.send(Respuesta);
+
+})
 
 module.exports = router;

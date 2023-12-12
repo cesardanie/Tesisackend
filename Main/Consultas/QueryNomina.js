@@ -57,8 +57,22 @@ async function ObtenerDatos() {
         throw new Error(`Se presentó un error en ${e.procName}.....${e.message}`);
     }
 }
+async function ObtenerDatosCliente(id) {
+    try {
+            let pool = await sql.connect(cnxlocal);
+            let idUsuario = id;
+            // Consulta para obtener información de CuentasBancarias por idUsuario
+            let consultaCuentasBancarias = await pool.request()
+                .input('idUsuario', sql.Int, idUsuario)
+                .query('SELECT Mes, Estado  FROM Nomina WHERE idUsuario = @idUsuario');
+               return consultaCuentasBancarias.recordset; // Devuelve la información de usuarios con datos de CuentasBancarias
+    } catch (e) {
+        throw new Error(`Se presentó un error en ${e.procName}.....${e.message}`);
+    }
+}
 module.exports = {
     InsertarPago,
-    ObtenerDatos
+    ObtenerDatos,
+    ObtenerDatosCliente
     // Otros métodos o variables que necesites exportar
 };
