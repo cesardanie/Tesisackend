@@ -4,6 +4,7 @@ const axios= require('axios');
 const router=expres.Router();
 const jwt = require('jsonwebtoken');
 const llave="ro8BS6Hiivgzy8Xuu09JDjlNLnSLldY5p";
+const QueryFirma= require('../Consultas/QueryFirma');
 
 const verify=(req,res,next)=>{
     ////leo la cabezera
@@ -28,10 +29,12 @@ const verify=(req,res,next)=>{
     
 };
 
-router.post('/FirmaInsert',async(request,response)=>{
+router.post('/FirmaInsert',verify,async(request,response)=>{
     var Respuesta={
         Estado:"",
     }
+    console.log(request);
+    const resultadodos=await QueryFirma.InsertarFirma(request.body);
     console.log(request.body);
     Respuesta.Estado=true;
     response.send(Respuesta);
