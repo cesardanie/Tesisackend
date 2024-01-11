@@ -1,90 +1,136 @@
 const { json, response } = require('express');
-const expres =require('express');
-const axios= require('axios');
-const router=expres.Router();
+const express = require('express');
+const axios = require('axios');
+const router = express.Router();
 const jwt = require('jsonwebtoken');
-const llave="ro8BS6Hiivgzy8Xuu09JDjlNLnSLldY5p";
-const QueryFirma= require('../Consultas/QueryFirma');
+const llave = "ro8BS6Hiivgzy8Xuu09JDjlNLnSLldY5p";
+const QueryFirma = require('../Consultas/QueryFirma');
 const fs = require('fs');
 const PDFDocument = require('pdfkit');
+const sharp = require('sharp');
+const path = require('path');
+const multer = require('multer');
 
-const verify=(req,res,next)=>{
-    ////leo la cabezera
-        const authHeader=req.headers.authorization;
-       ///verifico que no sea null
-        if(authHeader){
-            ///verifico el token 
-            jwt.verify(authHeader,llave,(err,authHeader)=>{
-                if(err)
-                {
-                   ///me retorna un error si esta mal
-                    return res.status(200).json({Validador:false});
-                }
-               ///avanza a la siguiente parte del codigo
-                req.authHeader=authHeader;
-                next();
-            });
-        }else{
-            res.status(401).json("no se ha podido autenticar");
-    
-        }
-    
+// Configuración de multer para manejar archivos adjuntos
+const storage = multer.memoryStorage(); // Almacenar el archivo en memoria
+const upload = multer({ storage: storage });
+
+const verify = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+        jwt.verify(authHeader, llave, (err, authHeader) => {
+            if (err) {
+                return res.status(200).json({ Validador: false });
+            }
+            req.authHeader = authHeader;
+            next();
+        });
+    } else {
+        res.status(401).json("no se ha podido autenticar");
+    }
 };
 
-router.post('/FirmaInsert',verify,async(request,response)=>{
-    var Respuesta={
-        Estado:"",
+router.post('/FirmaInsert', verify, upload.single('firma'), async (request, response) => {
+    try {
+      const { file: firma } = request;
+  
+      if (!firma) {
+        return response.status(400).json({ error: 'No se proporcionó la firma adjunta' });
+      }
+  
+      // Ahora `firma.buffer` contiene los datos del archivo adjunto en formato de búfer
+  
+      // Aquí puedes usar QueryFirma.InsertarFirma(request.body, firma.buffer) para insertar la firma junto con otros datos
+      const resultadodos = await QueryFirma.InsertarFirma(request.body, firma.buffer);
+  
+      console.log(request.body);
+  
+      const Respuesta = {
+        Estado: true,
+      };
+  
+      response.json(Respuesta);
+    } catch (error) {
+      console.error('Error al manejar la firma adjunta:', error.message);
+      response.status(500).json({ error: 'Error interno del servidor' });
     }
-    console.log(request);
-    const resultadodos=await QueryFirma.InsertarFirma(request.body);
-    console.log(request.body);
-    Respuesta.Estado=true;
-    response.send(Respuesta);
+  });
 
-})
-router.post('/certificadoempresa',async(request,response)=>{
-    var Respuesta={
-        Estado:"",
+router.post('/certificadoempresa', async (request, response) => {
+    var Respuesta = {
+        Estado: "",
     }
-    console.log(request);
-    // Simulación de la firma almacenada en la base de datos (reemplaza con tu lógica de obtención de la firma)
-    const firmaBase64 = '...'; // Tu firma almacenada en base64
 
-    // Ruta donde se guardará el PDF
-    const outputPath = 'output.pdf';
+    try {
+        const resultadodos = await QueryFirma.ObtenerFirma(request.body);
+        console.log(resultadodos);
+        const firmaBuffer = Buffer.from(resultadodos, 'base64');
+        const rutaDeGuardado = path.join(__dirname, '../Upload/' + "firma.png");
 
-    // Crear un nuevo documento PDF
-    const doc = new PDFDocument();
+        if (Buffer.isBuffer(firmaBuffer)) {
+            if (firmaBuffer.length > 0) {
+                console.log('firmaBuffer es un objeto Buffer válido con datos de imagen.');
+            } else {
+                console.error('Error: firmaBuffer está vacío. No hay datos para procesar.');
+            }
+        } else {
+            console.error('Error: firmaBuffer no es un objeto Buffer válido.');
+        }
 
-    // Crear un flujo de escritura para guardar el PDF en el sistema de archivos
-    const stream = fs.createWriteStream(outputPath);
+        console.log(rutaDeGuardado);
 
-    // Pipe el flujo de escritura al documento PDF
-    doc.pipe(stream);
+        await convertirYGuardarImagen(firmaBuffer, rutaDeGuardado);
 
-    // Agregar contenido al PDF
-    doc.fontSize(14).text('Este es un documento PDF con la firma:', 50, 50);
-    doc.moveDown(); // Mover hacia abajo para separar el texto y la firma
+        const outputPath = 'output.pdf';
+        const doc = new PDFDocument();
+        const stream = fs.createWriteStream(outputPath);
+        doc.pipe(stream);
 
-    // Decodificar la firma base64 y agregarla al PDF como una imagen
-    const firmaBuffer = Buffer.from(firmaBase64, 'base64');
-    doc.image(firmaBuffer, { width: 200, height: 100, align: 'center' });
+        doc.fontSize(14).text('Este es un documento PDF con la firma:', 50, 50);
+        doc.moveDown();
+        doc.image(rutaDeGuardado, { width: 500, height: 500, align: 'center' });
+        doc.end();
 
-    // Finalizar y cerrar el documento PDF
-    doc.end();
+        stream.on('finish', () => {
+            console.log(`PDF creado exitosamente en: ${outputPath}`);
+        });
 
-    // Escuchar el evento 'finish' del flujo de escritura para saber cuándo se ha completado la escritura del PDF
-    stream.on('finish', () => {
-    console.log(`PDF creado exitosamente en: ${outputPath}`);
+        stream.on('error', (err) => {
+            console.error('Error al escribir el PDF:', err);
+        });
+
+        Respuesta.Estado = true;
+        response.send(Respuesta);
+
+    } catch (error) {
+        console.error('Error general:', error);
+        Respuesta.Estado = false;
+        response.send(Respuesta);
+    }
+
+});
+
+const convertirYGuardarImagen = (firmaBuffer, rutaDeGuardado) => {
+    return new Promise((resolve, reject) => {
+        // Verifica el formato de la imagen antes de usar sharp
+        const imageType = require('image-type');
+        const formato = imageType(firmaBuffer);
+        console.log('Formato de imagen:', formato);
+
+        // Intenta crear una imagen directamente sin cambiar el formato
+        sharp(firmaBuffer, { input: formato })
+            .toFile(rutaDeGuardado, (err, info) => {
+                if (err) {
+                    console.error('Error al convertir y guardar la imagen:', err);
+                    reject(err);
+                } else {
+                    console.log('Imagen decodificada y guardada:', rutaDeGuardado);
+                    resolve(info);
+                }
+            });
     });
+};
 
-    // Manejar errores
-    stream.on('error', (err) => {
-    console.error('Error al escribir el PDF:', err);
-    });
-    Respuesta.Estado=true;
-    response.send(Respuesta);
 
-})
 
 module.exports = router;
