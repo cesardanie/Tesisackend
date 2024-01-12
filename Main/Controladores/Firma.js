@@ -33,16 +33,17 @@ const verify = (req, res, next) => {
 router.post('/FirmaInsert', verify, upload.single('firma'), async (request, response) => {
     try {
       const { file: firma } = request;
+              // Access user ID from the request body
+              const userId = request.body.id;
   
       if (!firma) {
         return response.status(400).json({ error: 'No se proporcionó la firma adjunta' });
       }
-  
-      // Ahora `firma.buffer` contiene los datos del archivo adjunto en formato de búfer
-  
-      // Aquí puedes usar QueryFirma.InsertarFirma(request.body, firma.buffer) para insertar la firma junto con otros datos
-      const resultadodos = await QueryFirma.InsertarFirma(request.body, firma.buffer);
-  
+       // se modifica la estructura del nomnre para que pueda ser leida por la api cloud de whatsapp
+        var name=firma.fieldname;
+        var Type_Content=Identificacion_tipocontent(firma.mimetype);
+        const uploadPath =path.join( __dirname, '../Upload/' +name);
+      await Agregar_imagenes(uploadPath,firma,guardarurl,name,Type_Content,userId);
       console.log(request.body);
   
       const Respuesta = {
@@ -109,28 +110,62 @@ router.post('/certificadoempresa', async (request, response) => {
     }
 
 });
+function Identificacion_tipocontent(name)
+{
+    ///lee los ultimos 4 caracteres del nombre de la imagen
+    const tipo = name.substring(name.length - 4);
+    var tipostr='image/jpeg'
+    if(tipo=="jpeg")
+    {
+        tipostr='image/jpeg'
+        return tipostr
+    }else if(tipo=="/png")
+    {
+        tipostr='image/png'
+        return tipostr
+    }
 
-const convertirYGuardarImagen = (firmaBuffer, rutaDeGuardado) => {
-    return new Promise((resolve, reject) => {
-        // Verifica el formato de la imagen antes de usar sharp
-        const imageType = require('image-type');
-        const formato = imageType(firmaBuffer);
-        console.log('Formato de imagen:', formato);
-
-        // Intenta crear una imagen directamente sin cambiar el formato
-        sharp(firmaBuffer, { input: formato })
-            .toFile(rutaDeGuardado, (err, info) => {
-                if (err) {
-                    console.error('Error al convertir y guardar la imagen:', err);
-                    reject(err);
-                } else {
-                    console.log('Imagen decodificada y guardada:', rutaDeGuardado);
-                    resolve(info);
-                }
-            });
+}
+async function Agregar_imagenes(uploadPath,Image,guardarurl,name,Type_Content,userId)
+{    
+    var Nombreurlimagen="",strConEspaciosReemplazados="";
+        Image.mv(uploadPath, async function(err) {
+            if (err) {
+                return respuestajson={
+                    title: "agregado correctamente",
+                    url:guardarurl,
+                    msg:'error Al cargar la imagen',
+                };
+            }
+            //se tiene la imagen almacenada  
+            const Lectura= await fs.createReadStream(uploadPath);
+            //parametros necesarios para guardar en el bucket de s3
+            const parametrosenviarbucket={
+            Bucket: 'fastpayobjetos',
+            Key: name, // File name you want to save as in S3
+            Body: Lectura,
+            ACL: 'public-read',
+            ContentType: Type_Content,
+        }  
+        // la funcion upload sube una imagen el bucket 
+        console.log(name);
+        const command= new PutObjectCommand(parametrosenviarbucket)
+        const result= await client.send(command);
+        const params = {
+            Bucket: "fastpayobjetos",
+          };
+          //tenemos el nombre del bucket en url
+          const bucketUrl = `https://${params.Bucket}.s3.amazonaws.com/`;
+          //unimos el bucket con el nombre de la imagen
+          const lastObjectUrl = `${bucketUrl}${name}`;
+          //la añadimos
+          Nombreurlimagen=lastObjectUrl;
+          ///Reemplaza los espacios con +
+         strConEspaciosReemplazados = Nombreurlimagen.replace(/ /g, "+");
+            /// se responde un json con los parametros correspondientes  
+        jsonImagen.llave=strConEspaciosReemplazados;
+        const resultadodos = await QueryFirma.InsertarFirma(userId, firma);
     });
-};
-
-
+}
 
 module.exports = router;
