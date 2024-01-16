@@ -6,10 +6,11 @@ const jwt = require('jsonwebtoken');
 const llave = "ro8BS6Hiivgzy8Xuu09JDjlNLnSLldY5p";
 const QueryFirma = require('../Consultas/QueryFirma');
 const fs = require('fs');
-const PDFDocument = require('pdfkit');
 const sharp = require('sharp');
 const path = require('path');
 const multer = require('multer');
+const PDFDocument = require('pdfkit');
+const Jimp = require('jimp');
 
 // Configuración de multer para manejar archivos adjuntos
 const storage = multer.memoryStorage(); // Almacenar el archivo en memoria
@@ -43,7 +44,7 @@ router.post('/FirmaInsert', verify, upload.single('firma'), async (request, resp
         var name=firma.fieldname;
         var Type_Content=Identificacion_tipocontent(firma.mimetype);
         const uploadPath =path.join( __dirname, '../Upload/' +name);
-      await Agregar_imagenes(uploadPath,firma,guardarurl,name,Type_Content,userId);
+      await Agregar_imagenes(uploadPath,firma,name,Type_Content,userId);
       console.log(request.body);
   
       const Respuesta = {
@@ -58,59 +59,77 @@ router.post('/FirmaInsert', verify, upload.single('firma'), async (request, resp
   });
 
 router.post('/certificadoempresa', async (request, response) => {
-    var Respuesta = {
-        Estado: "",
-    }
-
-    try {
-        const resultadodos = await QueryFirma.ObtenerFirma(request.body);
-        console.log(resultadodos);
-        const firmaBuffer = Buffer.from(resultadodos, 'base64');
-        const rutaDeGuardado = path.join(__dirname, '../Upload/' + "firma.png");
-
-        if (Buffer.isBuffer(firmaBuffer)) {
-            if (firmaBuffer.length > 0) {
-                console.log('firmaBuffer es un objeto Buffer válido con datos de imagen.');
-            } else {
-                console.error('Error: firmaBuffer está vacío. No hay datos para procesar.');
-            }
-        } else {
-            console.error('Error: firmaBuffer no es un objeto Buffer válido.');
+    var URL;
+    var Datosdos=[];
+    var validador=true,info,infodos;
+    /*
+    //Query de busqueda de los id de los productos con el id del cliente
+    await GetImagenes.GetUsuario(req.body.Id).then(result=>{
+        URL=result
+    })
+    //valida que venga algun dato en el retorno
+    if(URL==0){
+        validador=false;
+        info={
+            IdProducto: "",
+            Llave: "",
+            Estado: "",
         }
-
-        console.log(rutaDeGuardado);
-
-        await convertirYGuardarImagen(firmaBuffer, rutaDeGuardado);
-
-        const outputPath = 'output.pdf';
+        infodos=null;   
+    }
+    if(validador===true){
+        // recorrer los datos que trae para eso se accede al elemento y se le indica el dato que necesitamos
+        for(var u=0;u<URL.length;u++)
+        {
+            await GetImagenes.GetProducto(URL[u].id).then(result=>{
+                Datosdos.push(result);
+            })
+        }
+    }*/
+    try {
+        // Crear un nuevo documento PDF
         const doc = new PDFDocument();
-        const stream = fs.createWriteStream(outputPath);
-        doc.pipe(stream);
+        // Nombre del archivo
+        const nombreArchivo = 'firma.png';
 
-        doc.fontSize(14).text('Este es un documento PDF con la firma:', 50, 50);
-        doc.moveDown();
-        doc.image(rutaDeGuardado, { width: 500, height: 500, align: 'center' });
+        // Obtener la ruta del directorio actual del script
+        const directorioActual = __dirname;
+
+        // Construir la ruta completa al archivo
+        const rutaCompleta = path.join(directorioActual, nombreArchivo);
+
+        console.log('Ruta completa del archivo:', rutaCompleta);
+        // Ruta de la imagen de la firma
+        const firmaImagePath = directorioActual; // Ajusta la ruta según tu estructura de archivos
+        const firmaImage = await Jimp.read(firmaImagePath);
+
+        // Tamaño de la imagen de la firma
+        const firmaWidth = 200;
+        const firmaHeight = 100;
+
+        // Página 1: Agregar texto y espacio para la firma
+        doc.text('Este es un documento firmado', 50, 50);
+        doc.addPage();
+
+        // Página 2: Agregar la imagen de la firma
+        doc.image(firmaImage.resize(firmaWidth, firmaHeight).bitmap, {
+          align: 'center',
+          valign: 'center',
+        });
+
+        // Finalizar el documento y enviarlo como respuesta
+        response.setHeader('Content-Type', 'application/pdf');
+        response.setHeader('Content-Disposition', 'attachment; filename=documento-firmado.pdf');
+        doc.pipe(response);
         doc.end();
-
-        stream.on('finish', () => {
-            console.log(`PDF creado exitosamente en: ${outputPath}`);
-        });
-
-        stream.on('error', (err) => {
-            console.error('Error al escribir el PDF:', err);
-        });
-
-        Respuesta.Estado = true;
-        response.send(Respuesta);
-
-    } catch (error) {
-        console.error('Error general:', error);
-        Respuesta.Estado = false;
-        response.send(Respuesta);
+    } catch (err) {
+        console.error('Error al generar el PDF firmado:', err);
+        response.status(500).send('Error interno del servidor');
     }
 
 });
-function Identificacion_tipocontent(name)
+
+async function Identificacion_tipocontent(name)
 {
     ///lee los ultimos 4 caracteres del nombre de la imagen
     const tipo = name.substring(name.length - 4);
@@ -126,14 +145,13 @@ function Identificacion_tipocontent(name)
     }
 
 }
-async function Agregar_imagenes(uploadPath,Image,guardarurl,name,Type_Content,userId)
+async function Agregar_imagenes(uploadPath,Image,name,Type_Content,userId)
 {    
     var Nombreurlimagen="",strConEspaciosReemplazados="";
         Image.mv(uploadPath, async function(err) {
             if (err) {
                 return respuestajson={
                     title: "agregado correctamente",
-                    url:guardarurl,
                     msg:'error Al cargar la imagen',
                 };
             }
