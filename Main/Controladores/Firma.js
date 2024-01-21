@@ -37,6 +37,7 @@ router.post('/FirmaInsert', verify, upload.single('firma'), async (request, resp
               // Access user ID from the request body
               const userId = request.body.id;
   
+              
       if (!firma) {
         return response.status(400).json({ error: 'No se proporcionó la firma adjunta' });
       }
@@ -44,8 +45,8 @@ router.post('/FirmaInsert', verify, upload.single('firma'), async (request, resp
         var name=firma.fieldname;
         var Type_Content=Identificacion_tipocontent(firma.mimetype);
         const uploadPath =path.join( __dirname, '../Upload/' +name);
-      await Agregar_imagenes(uploadPath,firma,name,Type_Content,userId);
-      console.log(request.body);
+        await Agregar_imagenes(uploadPath,firma,name,Type_Content,userId);
+        console.log(request.body);
   
       const Respuesta = {
         Estado: true,
@@ -58,76 +59,6 @@ router.post('/FirmaInsert', verify, upload.single('firma'), async (request, resp
     }
   });
 
-router.post('/certificadoempresa', async (request, response) => {
-    var URL;
-    var Datosdos=[];
-    var validador=true,info,infodos;
-    /*
-    //Query de busqueda de los id de los productos con el id del cliente
-    await GetImagenes.GetUsuario(req.body.Id).then(result=>{
-        URL=result
-    })
-    //valida que venga algun dato en el retorno
-    if(URL==0){
-        validador=false;
-        info={
-            IdProducto: "",
-            Llave: "",
-            Estado: "",
-        }
-        infodos=null;   
-    }
-    if(validador===true){
-        // recorrer los datos que trae para eso se accede al elemento y se le indica el dato que necesitamos
-        for(var u=0;u<URL.length;u++)
-        {
-            await GetImagenes.GetProducto(URL[u].id).then(result=>{
-                Datosdos.push(result);
-            })
-        }
-    }*/
-    try {
-        // Crear un nuevo documento PDF
-        const doc = new PDFDocument();
-        // Nombre del archivo
-        const nombreArchivo = 'firma.png';
-
-        // Obtener la ruta del directorio actual del script
-        const directorioActual = __dirname;
-
-        // Construir la ruta completa al archivo
-        const rutaCompleta = path.join(directorioActual, nombreArchivo);
-
-        console.log('Ruta completa del archivo:', rutaCompleta);
-        // Ruta de la imagen de la firma
-        const firmaImagePath = directorioActual; // Ajusta la ruta según tu estructura de archivos
-        const firmaImage = await Jimp.read(firmaImagePath);
-
-        // Tamaño de la imagen de la firma
-        const firmaWidth = 200;
-        const firmaHeight = 100;
-
-        // Página 1: Agregar texto y espacio para la firma
-        doc.text('Este es un documento firmado', 50, 50);
-        doc.addPage();
-
-        // Página 2: Agregar la imagen de la firma
-        doc.image(firmaImage.resize(firmaWidth, firmaHeight).bitmap, {
-          align: 'center',
-          valign: 'center',
-        });
-
-        // Finalizar el documento y enviarlo como respuesta
-        response.setHeader('Content-Type', 'application/pdf');
-        response.setHeader('Content-Disposition', 'attachment; filename=documento-firmado.pdf');
-        doc.pipe(response);
-        doc.end();
-    } catch (err) {
-        console.error('Error al generar el PDF firmado:', err);
-        response.status(500).send('Error interno del servidor');
-    }
-
-});
 
 async function Identificacion_tipocontent(name)
 {

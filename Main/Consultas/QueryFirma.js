@@ -6,13 +6,14 @@ async function InsertarFirma(clientes) {
         console.log(clientes);
         let pool = await sql.connect(cnxlocal);
         let insertQuery = `
-            INSERT INTO Firmas (idUsuario, firma_base64)
-            VALUES (@idUsuario, @firma_base64)
+        INSERT INTO Firmas (idUsuario, bucket, llave)
+        VALUES (@idUsuario, @bucket, @llave);
         `;
       
         let insertData = await pool.request()
             .input('idUsuario', sql.Int, clientes.id)
-            .input('firma_base64', sql.Text, clientes.firmaBase64)
+            .input('bucket', sql.Text, clientes.bucket)
+            .input('llave', sql.Text, clientes.llave)
             .query(insertQuery);
     } catch (e) {
         throw new Error(`Se presentó un error en ${e.procName}.....${e.message}`);
