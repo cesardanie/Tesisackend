@@ -11,11 +11,18 @@ const path = require('path');
 const multer = require('multer');
 const PDFDocument = require('pdfkit');
 const Jimp = require('jimp');
+const { S3Client, PutObjectCommand, ListObjectsV2Command } = require("@aws-sdk/client-s3");
 
 // Configuración de multer para manejar archivos adjuntos
 const storage = multer.memoryStorage(); // Almacenar el archivo en memoria
 const upload = multer({ storage: storage });
-
+const client = new S3Client({
+    region: 'us-east-1',
+    credentials: {
+        accessKeyId: 'AKIAZQ3DOV3DG4XZCFFJ',
+        secretAccessKey: '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',
+    }
+})
 const verify = (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (authHeader) {
