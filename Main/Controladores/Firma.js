@@ -31,89 +31,84 @@ const verify = (req, res, next) => {
     }
 };
 
-router.post('/FirmaInsert', verify, async (request, response) => {
+router.post('/FirmaInsert', upload.single('firma'), verify, async (request, response) => {
     try {
-        const { firma } = request.files.firma;
-    
-              // Access user ID from the request body
-              const userId = request.body.id;
-  
-              
-      if (!firma) {
-        return response.status(400).json({ error: 'No se proporcionó la firma adjunta' });
-      }
-       // se modifica la estructura del nomnre para que pueda ser leida por la api cloud de whatsapp
-        var name=firma.fieldname;
-        var Type_Content=Identificacion_tipocontent(firma.mimetype);
-        const uploadPath =path.join( __dirname, '../Upload/' +name);
-        await Agregar_imagenes(uploadPath,firma,name,Type_Content,userId);
+        const firma = request.file;
+        if (!firma) {
+            return response.status(400).send('No se subió ningún archivo');
+        }
+        // Access user ID from the request body
+        const userId = request.body.id;
+
+
+        // se modifica la estructura del nomnre para que pueda ser leida por la api cloud de whatsapp
+        var name = firma.fieldname;
+        var Type_Content = Identificacion_tipocontent(firma.mimetype);
+        const uploadPath = path.join(__dirname, '../Upload/' + name);
+        await Agregar_imagenes(uploadPath, firma, name, Type_Content, userId);
         console.log(request.body);
-  
-      const Respuesta = {
-        Estado: true,
-      };
-  
-      response.json(Respuesta);
+
+        const Respuesta = {
+            Estado: true,
+        };
+
+        response.json(Respuesta);
     } catch (error) {
-      console.error('Error al manejar la firma adjunta:', error.message);
-      response.status(500).json({ error: 'Error interno del servidor' });
+        console.error('Error al manejar la firma adjunta:', error.message);
+        response.status(500).json({ error: 'Error interno del servidor' });
     }
-  });
+});
 
 
-async function Identificacion_tipocontent(name)
-{
+async function Identificacion_tipocontent(name) {
     ///lee los ultimos 4 caracteres del nombre de la imagen
     const tipo = name.substring(name.length - 4);
-    var tipostr='image/jpeg'
-    if(tipo=="jpeg")
-    {
-        tipostr='image/jpeg'
+    var tipostr = 'image/jpeg'
+    if (tipo == "jpeg") {
+        tipostr = 'image/jpeg'
         return tipostr
-    }else if(tipo=="/png")
-    {
-        tipostr='image/png'
+    } else if (tipo == "/png") {
+        tipostr = 'image/png'
         return tipostr
     }
 
 }
-async function Agregar_imagenes(uploadPath,Image,name,Type_Content,userId)
-{    
-    var Nombreurlimagen="",strConEspaciosReemplazados="";
-        Image.mv(uploadPath, async function(err) {
-            if (err) {
-                return respuestajson={
-                    title: "agregado correctamente",
-                    msg:'error Al cargar la imagen',
-                };
-            }
-            //se tiene la imagen almacenada  
-            const Lectura= await fs.createReadStream(uploadPath);
-            //parametros necesarios para guardar en el bucket de s3
-            const parametrosenviarbucket={
+async function Agregar_imagenes(uploadPath, Image, name, Type_Content, userId) {
+    var Nombreurlimagen = "", strConEspaciosReemplazados = "";
+    Image.mv(uploadPath, async function (err) {
+        if (err) {
+            return respuestajson = {
+                title: "agregado correctamente",
+                msg: 'error Al cargar la imagen',
+            };
+        }
+        //se tiene la imagen almacenada  
+        const Lectura = await fs.createReadStream(uploadPath);
+        //parametros necesarios para guardar en el bucket de s3
+        const parametrosenviarbucket = {
             Bucket: 'fastpayobjetos',
             Key: name, // File name you want to save as in S3
             Body: Lectura,
             ACL: 'public-read',
             ContentType: Type_Content,
-        }  
+        }
         // la funcion upload sube una imagen el bucket 
         console.log(name);
-        const command= new PutObjectCommand(parametrosenviarbucket)
-        const result= await client.send(command);
+        const command = new PutObjectCommand(parametrosenviarbucket)
+        const result = await client.send(command);
         const params = {
             Bucket: "fastpayobjetos",
-          };
-          //tenemos el nombre del bucket en url
-          const bucketUrl = `https://${params.Bucket}.s3.amazonaws.com/`;
-          //unimos el bucket con el nombre de la imagen
-          const lastObjectUrl = `${bucketUrl}${name}`;
-          //la añadimos
-          Nombreurlimagen=lastObjectUrl;
-          ///Reemplaza los espacios con +
-         strConEspaciosReemplazados = Nombreurlimagen.replace(/ /g, "+");
-            /// se responde un json con los parametros correspondientes  
-        jsonImagen.llave=strConEspaciosReemplazados;
+        };
+        //tenemos el nombre del bucket en url
+        const bucketUrl = `https://${params.Bucket}.s3.amazonaws.com/`;
+        //unimos el bucket con el nombre de la imagen
+        const lastObjectUrl = `${bucketUrl}${name}`;
+        //la añadimos
+        Nombreurlimagen = lastObjectUrl;
+        ///Reemplaza los espacios con +
+        strConEspaciosReemplazados = Nombreurlimagen.replace(/ /g, "+");
+        /// se responde un json con los parametros correspondientes  
+        jsonImagen.llave = strConEspaciosReemplazados;
         const resultadodos = await QueryFirma.InsertarFirma(userId, firma);
     });
 }
