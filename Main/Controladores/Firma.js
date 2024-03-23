@@ -31,9 +31,10 @@ const verify = (req, res, next) => {
     }
 };
 
-router.post('/FirmaInsert', verify, upload.single('firma'), async (request, response) => {
+router.post('/FirmaInsert', verify, async (request, response) => {
     try {
-      const { file: firma } = request;
+        const { firma } = request.files.firma;
+    
               // Access user ID from the request body
               const userId = request.body.id;
   

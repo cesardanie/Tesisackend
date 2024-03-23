@@ -2,7 +2,7 @@ try{
     const cnx={
         ///datos de conexion 
         user:'sa',
-        password:'123456789',
+        password:'nicolas2096',
         server:'GWNR71517\\SQLEXPRESS',
         requestTimeout: 80000,
         database:'Gestionadministrativa',
