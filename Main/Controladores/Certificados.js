@@ -22,7 +22,7 @@ router.post('/ObtenerCertificadolaboral', async (req, res) => {
         const Datos = await QueryAdministrador.BuscarUsuarios(req.body.id);
 
         // Agregar contenido al PDF
-        doc.fontSize(20).text('Certificado Cesantias', { align: 'center' });
+        doc.fontSize(20).text('Certificado Laboral', { align: 'center' });
         doc.moveDown();
         doc.fontSize(16).text('Por medio del presente certificado...', { underline: false });
         doc.moveDown();
@@ -50,26 +50,22 @@ router.post('/ObtenerCertificadolaboral', async (req, res) => {
 
         fileStream.on('finish', async () => {
             console.log('Imagen guardada correctamente');
-            // Redimensionar la imagen con sharp
+            // Redimensionar la imagen con sharp (opcional)
             const resizedImagePath = path.join(folderPath, 'resizedImagen.png');
-            await sharp(imagePath).resize({ width: 250, height: 250 }).toFile(resizedImagePath);
-            // Insertar la imagen redimensionada en el PDF
-            doc.image(resizedImagePath, { fit: [100, 100], align: 'center' });
+            const imagePath = path.join(folderPath, 'tempImagen.png');
+            const imageOptions = { fit: [doc.page.width - 100, doc.page.height - 100], align: 'center', valign: 'center' };
+            doc.image(imagePath, 0, 0, imageOptions);
+
             // Finalizar y cerrar el documento PDF
             doc.end();
-            // Eliminar los archivos temporales después de usarlos
-            fs.unlinkSync(imagePath);
-            fs.unlinkSync(resizedImagePath);
 
-            // Convertir el PDF a un buffer
             const pdfBuffer = await new Promise((resolve, reject) => {
                 const buffers = [];
                 doc.on('data', buffers.push.bind(buffers));
                 doc.on('end', () => resolve(Buffer.concat(buffers)));
                 doc.on('error', reject);
             });
-
-            // Subir el PDF a Amazon S3
+            // Subir el PDF a Amazon S3 y enviar la URL al cliente
             const uploadParams = {
                 Bucket: 'fastpayobjetos',
                 Key: name,
@@ -77,8 +73,6 @@ router.post('/ObtenerCertificadolaboral', async (req, res) => {
                 ACL: 'public-read',
                 ContentType: 'application/pdf',
             };
-
-            // Subir el archivo a AWS S3
             const result = await client.send(new PutObjectCommand(uploadParams));
             const bucketUrl = `https://${uploadParams.Bucket}.s3.amazonaws.com/`;
             const objectUrl = `${bucketUrl}${name}`;
