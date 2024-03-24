@@ -98,11 +98,25 @@ async function BuscarUsuarios(id) {
     throw new Error(`Se presento un Error en ${e.procName}.....${e.message}`)
   }
 }
+async function UsuarioAdministrador(Correo)
+{
+  try {
+    let pool = await sql.connect(cnxlocal);
+    let consultaradministradores = await pool.query(`SELECT * FROM Usuarios where Correo='${Correo}' And Rol='Administrador'`);
+    return consultaradministradores.recordset;
+
+  }
+  catch (e) {
+    throw new Error(`Se presento un Error en ${e.procName}.....${e.message}`)
+  }
+
+}
 
 module.exports = {
   consultarUsuarios,
   EliminarUsuario,
   AgregarUsuario,
-  BuscarUsuarios
+  BuscarUsuarios,
+  UsuarioAdministrador,
   // Otros métodos o variables que necesites exportar
 };

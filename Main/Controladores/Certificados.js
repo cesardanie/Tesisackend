@@ -1,7 +1,10 @@
 const express = require('express');
 const PDFDocument = require('pdfkit');
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
-const QueryAdministrador=require('../Consultas/QueryConsultaUsuarios')
+const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
+const QueryAdministrador = require('../Consultas/QueryConsultaUsuarios')
+const path = require('path');
+const fs = require('fs');  // Importar el módulo fs
+const sharp = require('sharp');
 
 const router = express.Router();
 
@@ -13,52 +16,81 @@ const client = new S3Client({
     }
 })
 router.post('/ObtenerCertificadolaboral', async (req, res) => {
-    console.log(req.body);
-    const name = "pdfcertificadolaboral"
-    // Crear un nuevo documento PDF
-    const doc = new PDFDocument();
-    const Datos=await QueryAdministrador.BuscarUsuarios(req.body.id)
-    console.log(Datos);
-    // Agregar contenido al PDF
-    doc.fontSize(20).text('Certificado Laboral', { align: 'center' });
-    doc.moveDown(); // Moverse hacia abajo para separar el título del contenido
-    doc.fontSize(16).text('Por medio del presente certificado, hacemos constar que el señor, se encuentra afiliado(a) al fondo de cesantías Porvenir, en calidad de trabajador(a) de la empresa Plásticos La Pradera. Durante su tiempo de servicio, el(a) empleado(a) ha demostrado compromiso, dedicación y responsabilidad en sus labores, contribuyendo de manera significativa al desarrollo y crecimiento de nuestra empresa. Actualmente, se encuentra activo(a) y desempeñando sus funciones de manera eficiente y proactiva.  Este certificado se expide a petición del(a) interesado(a) para los fines que considere pertinentes. Quedamos a disposición para cualquier consulta adicional.', { underline: false });
-    doc.moveDown(); // Moverse hacia abajo antes de agregar el contenido
-
-    // Agregar las partes del documento, por ejemplo:
-    doc.fontSize(12).text(`Nombre: ${Datos[0].Nombre}`);
-    doc.fontSize(12).text(`Cargo: ${Datos[0].Puesto}`);
-    doc.fontSize(12).text(`Sueldo: ${Datos[0].Sueldo}`);
-    // Finalizar y cerrar el documento PDF
-    doc.end();
-
-    // Convertir el PDF a un buffer
-    const pdfBuffer = await new Promise((resolve, reject) => {
-        const buffers = [];
-        doc.on('data', buffers.push.bind(buffers));
-        doc.on('end', () => resolve(Buffer.concat(buffers)));
-        doc.on('error', reject);
-    });
-
-    // Subir el PDF a Amazon S3
-    const uploadParams = {
-        Bucket: 'fastpayobjetos',
-        Key: name,
-        Body: pdfBuffer, // Utiliza el buffer del archivo
-        ACL: 'public-read',
-        ContentType:'application/pdf',
-    }
-
     try {
-        // Subir el archivo a AWS S3
-        const command = new PutObjectCommand(uploadParams);
-        const result = await client.send(command);
-        // Obtener la URL del objeto subido en S3 directamente de parametrosenviarbucket
-        const bucketUrl = `https://${uploadParams.Bucket}.s3.amazonaws.com/`;
-        const objectUrl = `${bucketUrl}${name}`;
-        res.status(200).json({ objectUrl });
+        const name = "pdfcertificadolaboral";
+        const doc = new PDFDocument();
+        const Datos = await QueryAdministrador.BuscarUsuarios(req.body.id);
+
+        // Agregar contenido al PDF
+        doc.fontSize(20).text('Certificado Cesantias', { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(16).text('Por medio del presente certificado...', { underline: false });
+        doc.moveDown();
+
+        // Agregar las partes del documento
+        doc.fontSize(12).text(`Nombre: ${Datos[0].Nombre}`);
+        doc.fontSize(12).text(`Cargo: ${Datos[0].Puesto}`);
+        doc.fontSize(12).text(`Sueldo: ${Datos[0].Sueldo}`);
+
+        const s3Params = {
+            Bucket: 'fastpayobjetos',
+            Key: 'firma',
+        };
+        const { Body } = await client.send(new GetObjectCommand(s3Params));
+
+        const folderPath = path.join(__dirname, 'carpeta');
+        if (!fs.existsSync(folderPath)) {
+            fs.mkdirSync(folderPath, { recursive: true });
+        }
+
+        // Guardar el flujo de datos en un archivo temporal
+        const imagePath = path.join(folderPath, 'tempImagen.png');
+        const fileStream = fs.createWriteStream(imagePath);
+        Body.pipe(fileStream);
+
+        fileStream.on('finish', async () => {
+            console.log('Imagen guardada correctamente');
+            // Redimensionar la imagen con sharp
+            const resizedImagePath = path.join(folderPath, 'resizedImagen.png');
+            await sharp(imagePath).resize({ width: 250, height: 250 }).toFile(resizedImagePath);
+            // Insertar la imagen redimensionada en el PDF
+            doc.image(resizedImagePath, { fit: [100, 100], align: 'center' });
+            // Finalizar y cerrar el documento PDF
+            doc.end();
+            // Eliminar los archivos temporales después de usarlos
+            fs.unlinkSync(imagePath);
+            fs.unlinkSync(resizedImagePath);
+
+            // Convertir el PDF a un buffer
+            const pdfBuffer = await new Promise((resolve, reject) => {
+                const buffers = [];
+                doc.on('data', buffers.push.bind(buffers));
+                doc.on('end', () => resolve(Buffer.concat(buffers)));
+                doc.on('error', reject);
+            });
+
+            // Subir el PDF a Amazon S3
+            const uploadParams = {
+                Bucket: 'fastpayobjetos',
+                Key: name,
+                Body: pdfBuffer,
+                ACL: 'public-read',
+                ContentType: 'application/pdf',
+            };
+
+            // Subir el archivo a AWS S3
+            const result = await client.send(new PutObjectCommand(uploadParams));
+            const bucketUrl = `https://${uploadParams.Bucket}.s3.amazonaws.com/`;
+            const objectUrl = `${bucketUrl}${name}`;
+            res.status(200).json({ objectUrl });
+        });
+
+        fileStream.on('error', err => {
+            console.error('Error al guardar el archivo:', err);
+            res.status(500).json({ error: 'Error interno del servidor' });
+        });
     } catch (error) {
-        console.error('Error al subir el archivo a S3:', error);
+        console.error('Error en la generación del PDF:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
