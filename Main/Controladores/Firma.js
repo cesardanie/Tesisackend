@@ -17,7 +17,7 @@ const { S3Client, PutObjectCommand, ListObjectsV2Command } = require("@aws-sdk/c
 const storage = multer.memoryStorage(); // Almacenar el archivo en memoria
 const upload = multer({ storage: storage });
 const client = new S3Client({
-    region: 'us-east-1',
+    region: 'us-east-2',
     credentials: {
         accessKeyId: 'AKIAZQ3DOV3DG4XZCFFJ',
         secretAccessKey: '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',
@@ -80,44 +80,47 @@ async function Identificacion_tipocontent(name) {
     }
 
 }
-async function Agregar_imagenes(uploadPath, Image, name, Type_Content, userId) {
-    var Nombreurlimagen = "", strConEspaciosReemplazados = "";
-    Image.mv(uploadPath, async function (err) {
-        if (err) {
-            return respuestajson = {
-                title: "agregado correctamente",
-                msg: 'error Al cargar la imagen',
-            };
+async function Agregar_imagenes(uploadPath, file, name, Type_Content, userId) {
+    try {
+        // Verificar que el archivo esté presente
+        if (!file) {
+            throw new Error('No se subió ningún archivo');
         }
-        //se tiene la imagen almacenada  
-        const Lectura = await fs.createReadStream(uploadPath);
-        //parametros necesarios para guardar en el bucket de s3
+
+        // No es necesario mover el archivo manualmente, ya está en memoryStorage de multer
+
+        // Parámetros para subir a AWS S3
         const parametrosenviarbucket = {
             Bucket: 'fastpayobjetos',
-            Key: name, // File name you want to save as in S3
-            Body: Lectura,
+            Key: name,
+            Body: file.buffer, // Utiliza el buffer del archivo
             ACL: 'public-read',
-            ContentType: Type_Content,
+            ContentType: file.mimetype,
         }
-        // la funcion upload sube una imagen el bucket 
-        console.log(name);
-        const command = new PutObjectCommand(parametrosenviarbucket)
+
+        // Subir el archivo a AWS S3
+        const command = new PutObjectCommand(parametrosenviarbucket);
         const result = await client.send(command);
-        const params = {
-            Bucket: "fastpayobjetos",
-        };
-        //tenemos el nombre del bucket en url
-        const bucketUrl = `https://${params.Bucket}.s3.amazonaws.com/`;
-        //unimos el bucket con el nombre de la imagen
-        const lastObjectUrl = `${bucketUrl}${name}`;
-        //la añadimos
-        Nombreurlimagen = lastObjectUrl;
-        ///Reemplaza los espacios con +
-        strConEspaciosReemplazados = Nombreurlimagen.replace(/ /g, "+");
-        /// se responde un json con los parametros correspondientes  
-        jsonImagen.llave = strConEspaciosReemplazados;
-        const resultadodos = await QueryFirma.InsertarFirma(userId, firma);
-    });
+
+        // Obtener la URL del objeto subido en S3 directamente de parametrosenviarbucket
+        const bucketUrl = `https://${parametrosenviarbucket.Bucket}.s3.amazonaws.com/`;
+        const objectUrl = `${bucketUrl}${name}`;
+        const parametrosQuery={
+            id:userId,
+            llave:objectUrl,
+            bucket:'fastpayobjetos',
+        }
+        const firma=await QueryFirma.InsertarFirma(parametrosQuery);
+        // Reemplazar espacios con +
+        const urlConEspaciosReemplazados = objectUrl.replace(/ /g, "+");
+
+        // Devolver la URL generada
+        return urlConEspaciosReemplazados;
+    } catch (error) {
+        console.error('Error al agregar la imagen:', error);
+        throw error; // Propagar el error para manejarlo en la capa superior
+    }
 }
+
 
 module.exports = router;
