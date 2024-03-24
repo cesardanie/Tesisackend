@@ -22,9 +22,11 @@ router.post('/ObtenerCertificadolaboral', async (req, res) => {
         const Datos = await QueryAdministrador.BuscarUsuarios(req.body.id);
 
         // Agregar contenido al PDF
-        doc.fontSize(20).text('Certificado Laboral', { align: 'center' });
+        doc.fillColor('red');
+        doc.fontSize(20).text('Certificado de Cesantias', { align: 'center' });
+        doc.fillColor('black');
         doc.moveDown();
-        doc.fontSize(16).text('Por medio del presente certificado...', { underline: false });
+        doc.fontSize(16).text(`Por medio del presente certificado, hacemos constar que ${Datos[0].Nombre}, afiliado al fondo de cesantías Porvenir, ha sido un trabajador dedicado y comprometido durante su tiempo de servicio en nuestra empresa. El señor ${Datos[0].Nombre} se desempeñó como ${Datos[0].Puesto}  demostrando responsabilidad, eficiencia y compromiso en todas sus labores.`, { underline: false });
         doc.moveDown();
 
         // Agregar las partes del documento
@@ -53,9 +55,17 @@ router.post('/ObtenerCertificadolaboral', async (req, res) => {
             // Redimensionar la imagen con sharp (opcional)
             const resizedImagePath = path.join(folderPath, 'resizedImagen.png');
             const imagePath = path.join(folderPath, 'tempImagen.png');
-            const imageOptions = { fit: [doc.page.width - 100, doc.page.height - 100], align: 'center', valign: 'center' };
+            const imageOptions = { fit: [doc.page.width - 50, doc.page.height - 50], align: 'center', valign: 'center' };
+            doc.moveDown(); // Moverse hacia abajo para agregar espacio
+            doc.moveDown(); // Moverse hacia abajo para agregar espacio
             doc.image(imagePath, 0, 0, imageOptions);
-
+            doc.moveDown(); // Moverse hacia abajo para agregar espacio
+            doc.moveDown(); // Moverse hacia abajo para agregar espacio
+            doc.moveDown(); // Moverse hacia abajo para agregar espacio
+            doc.text('\n\n')
+            doc.fillColor('red');
+            doc.fontSize(12).text('\nFirma del Gerente', { align: 'center' });
+            doc.fillColor('black');
             // Finalizar y cerrar el documento PDF
             doc.end();
 
