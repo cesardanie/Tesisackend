@@ -17,22 +17,43 @@ const client = new S3Client({
 })
 router.post('/ObtenerCertificadolaboral', async (req, res) => {
     try {
+        console.log(req.body)
         const name = "pdfcertificadolaboral";
         const doc = new PDFDocument();
         const Datos = await QueryAdministrador.BuscarUsuarios(req.body.id);
+        if (req.body.Opcion === 1) {
+            // Agregar contenido al PDF
+            doc.fillColor('red');
+            doc.fontSize(20).text('Certificado de Cesantias', { align: 'center' });
+            doc.fillColor('black');
+            doc.moveDown();
+            doc.fontSize(16).text(`Por medio del presente certificado, hacemos constar que ${Datos[0].Nombre}, afiliado al fondo de cesantías Porvenir, ha sido un trabajador dedicado y comprometido durante su tiempo de servicio en nuestra empresa. El señor ${Datos[0].Nombre} se desempeñó como ${Datos[0].Puesto}  demostrando responsabilidad, eficiencia y compromiso en todas sus labores.`, { underline: false });
+            doc.moveDown();
+        }
+        else if (req.body.Opcion === 2) {
+            // Agregar contenido al PDF
+            doc.fillColor('red');
+            doc.fontSize(20).text('Certificado de Pension', { align: 'center' });
+            doc.fillColor('black');
+            doc.moveDown();
+            doc.fontSize(16).text(`Por medio del presente certificado, hacemos constar que ${Datos[0].Nombre}, afiliado al fondo de Pensiones Porvenir, ha sido un trabajador dedicado y comprometido durante su tiempo de servicio en nuestra empresa. El señor ${Datos[0].Nombre} se desempeñó como ${Datos[0].Puesto}  demostrando responsabilidad, eficiencia y compromiso en todas sus labores.`, { underline: false });
+            doc.moveDown();
+        }
+        else if (req.body.Opcion === 3) {
+            // Agregar contenido al PDF
+            doc.fillColor('red');
+            doc.fontSize(20).text('Certificado de Trabajo', { align: 'center' });
+            doc.fillColor('black');
+            doc.moveDown();
+            doc.fontSize(16).text(`Por medio del presente certificado, hacemos constar que ${Datos[0].Nombre}, afiliado al fondo de Pensiones Porvenir, ha sido un trabajador dedicado y comprometido durante su tiempo de servicio en nuestra empresa. Durante su periodo laboral, el señor ${Datos[0].Nombre} desempeñó el cargo de ${Datos[0].Puesto}, demostrando en todo momento una alta dosis de responsabilidad, eficiencia y compromiso en cada una de sus labores asignadas.`, { underline: false });
+            doc.moveDown();
+        }
 
-        // Agregar contenido al PDF
-        doc.fillColor('red');
-        doc.fontSize(20).text('Certificado de Cesantias', { align: 'center' });
-        doc.fillColor('black');
-        doc.moveDown();
-        doc.fontSize(16).text(`Por medio del presente certificado, hacemos constar que ${Datos[0].Nombre}, afiliado al fondo de cesantías Porvenir, ha sido un trabajador dedicado y comprometido durante su tiempo de servicio en nuestra empresa. El señor ${Datos[0].Nombre} se desempeñó como ${Datos[0].Puesto}  demostrando responsabilidad, eficiencia y compromiso en todas sus labores.`, { underline: false });
-        doc.moveDown();
 
         // Agregar las partes del documento
-        doc.fontSize(12).text(`Nombre: ${Datos[0].Nombre}`);
-        doc.fontSize(12).text(`Cargo: ${Datos[0].Puesto}`);
-        doc.fontSize(12).text(`Sueldo: ${Datos[0].Sueldo}`);
+        doc.fontSize(12).text(`Nombre: ${Datos[0].Nombre}\n`);
+        doc.fontSize(12).text(`Cargo: ${Datos[0].Puesto}\n`);
+        doc.fontSize(12).text(`Sueldo: ${Datos[0].Sueldo}\n`);
 
         const s3Params = {
             Bucket: 'fastpayobjetos',
@@ -55,14 +76,17 @@ router.post('/ObtenerCertificadolaboral', async (req, res) => {
             // Redimensionar la imagen con sharp (opcional)
             const resizedImagePath = path.join(folderPath, 'resizedImagen.png');
             const imagePath = path.join(folderPath, 'tempImagen.png');
-            const imageOptions = { fit: [doc.page.width - 50, doc.page.height - 50], align: 'center', valign: 'center' };
+            //si se requiere mover la imagen hacia abajo es con numeros negativos  hacia arriba positivos
+            const imageOptions = { fit: [doc.page.width - -100, doc.page.height - -100], align: 'center', valign: 'center' };
             doc.moveDown(); // Moverse hacia abajo para agregar espacio
             doc.moveDown(); // Moverse hacia abajo para agregar espacio
+            doc.text('\n\n\n')
+            doc.text('\n\n\n')
             doc.image(imagePath, 0, 0, imageOptions);
             doc.moveDown(); // Moverse hacia abajo para agregar espacio
             doc.moveDown(); // Moverse hacia abajo para agregar espacio
             doc.moveDown(); // Moverse hacia abajo para agregar espacio
-            doc.text('\n\n')
+            doc.text('\n\n\n')
             doc.fillColor('red');
             doc.fontSize(12).text('\nFirma del Gerente', { align: 'center' });
             doc.fillColor('black');
