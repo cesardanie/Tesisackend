@@ -1,9 +1,9 @@
 try{
     const cnx={
         ///datos de conexion 
-        user:'sa',
+        user:'admin',
         password:'nicolas2096',
-        server:'GWNR71517\\SQLEXPRESS',
+        server:'pruebacorazon.c9aku0gc6h25.us-east-1.rds.amazonaws.com,1433',
         requestTimeout: 80000,
         database:'Gestionadministrativa',
         options:{
@@ -19,3 +19,7 @@ try{
     {
          console.log(error.message);
     }
+    ///Local
+    ///user:sa
+    ///server:'GWNR71517\\SQLEXPRESS',
+    ///
