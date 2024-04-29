@@ -14,7 +14,9 @@ const Firma=require('./Main/Controladores/Firma.js')
 const Certificados=require('./Main/Controladores/Certificados.js')
 // No necesitas una segunda declaración de cors aquí
 
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3023', 'https://master.d1qlobtc50c87.amplifyapp.com']
+}));
 
 var whitelist = process.env.PORT || ['http://localhost:3023']; // Permito que solo esta URL se conecte
 app.use(express.json());
