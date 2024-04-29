@@ -3,7 +3,7 @@ try{
         ///datos de conexion 
         user:'admin',
         password:'nicolas2096',
-        server:'pruebacorazon.c9aku0gc6h25.us-east-1.rds.amazonaws.com,1433',
+        server:'pruebacorazon.c9aku0gc6h25.us-east-1.rds.amazonaws.com',
         requestTimeout: 80000,
         database:'Gestionadministrativa',
         options:{
